@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context https://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <!-- 引入数据库配置文件信息 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <!-- 注解包扫描，排除扫描 Controller注解 -->
+    <context:component-scan base-package="cn.hniu">
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="username" value="${db.username}"/>
+        <property name="password" value="${db.password}"/>
+        <property name="url" value="${db.url}"/>
+        <property name="driverClassName" value="${db.driver}"/>
+    </bean>
+
+    <!-- 事务管理 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <!-- 数据源管理 -->
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 事务通知 -->
+    <tx:advice id="txAdvice">
+        <tx:attributes>
+            <tx:method name="select*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="save*" rollback-for="Exception"/>
+            <tx:method name="update*" rollback-for="Exception"/>
+            <tx:method name="search*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="get*" read-only="true" propagation="SUPPORTS"/>
+            <tx:method name="*" rollback-for="java.lang.Exception"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- 声明式事务 -->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution(* cn.hniu.service..*.*(..))"/>
+    </aop:config>
+
+    <!-- Spring整合 MyBatis -->
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="cn.hniu.pojo"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+    </bean>
+
+    <!-- Mapper层代理接口子类扫描 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="cn.hniu.mapper"/>
+    </bean>
+</beans>

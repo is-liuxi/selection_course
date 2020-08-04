@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hniu.mapper.StudentMapper">
+
+    <update id="updateStudent" parameterType="student">
+        UPDATE
+            student
+        <set>
+            <if test="stuName != null and stuName.length > 0">
+                stuName = #{stuName},
+            </if>
+            <if test="password != null">
+                password = #{password},
+            </if>
+            <if test="classes != null and classes.length > 0">
+                classes = #{classes},
+            </if>
+            <if test="gender != null">
+                gender = #{gender, javaType=INTEGER, jdbcType=CHAR},
+            </if>
+        </set>
+
+        <where>
+            id = #{id}
+        </where>
+    </update>
+</mapper>

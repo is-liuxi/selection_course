@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.hniu.mapper.CourseMapper">
+
+    <sql id="baseField">
+        c.cNo, c.cName, c.credit, c.cHour, c.address, t.teaName, c.teaNo
+    </sql>
+
+    <resultMap id="selectionCourse" type="course">
+        <id property="cNo" column="cNo"/>
+        <result property="cName" column="cName"/>
+        <result property="teaNo" column="teaNo"/>
+        <result property="credit" column="credit"/>
+        <result property="address" column="address"/>
+        <result property="cHour" column="cHour"/>
+        <association property="teacher" javaType="teacher">
+            <id property="id" column="teaNo"/>
+            <result property="password" column="password"/>
+            <result property="teaName" column="teaName"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询全部课程 -->
+    <select id="selectList" resultMap="selectionCourse">
+        SELECT
+        <include refid="baseField"></include>
+        FROM
+        course c
+        INNER JOIN teacher t ON c.teaNo = t.id
+    </select>
+
+    <!-- 查询已选的课程 -->
+    <select id="selectionMyCourse" resultMap="selectionCourse" parameterType="Integer">
+        SELECT
+        <include refid="baseField"></include>
+        FROM
+        student_course sc
+        INNER JOIN course c
+        INNER JOIN teacher t ON sc.teaNo = t.id
+        AND sc.cNo = c.cNo
+        WHERE
+        stuNo = #{sNo}
+    </select>
+
+    <!-- 根据用户 ID查询出可以选择的课程，已选择的课程不显示 -->
+    <select id="selectionCourse" parameterType="Integer" resultMap="selectionCourse">
+        SELECT
+        <include refid="baseField"></include>
+        FROM
+        (
+        SELECT
+        *
+        FROM
+        course
+        WHERE
+        cNo NOT IN (
+        SELECT
+        cNo
+        FROM
+        student_course
+        WHERE
+        stuNo = #{sNo}
+        )
+        ) c
+        INNER JOIN teacher t ON c.teaNo = t.id
+    </select>
+
+    <!-- 根据课程 ID查询课程详细信息 -->
+    <select id="selectCourseById" parameterType="Integer" resultMap="selectionCourse">
+        SELECT
+        <include refid="baseField"></include>
+        FROM
+        course c
+        INNER JOIN teacher t ON c.teaNo = t.id
+        WHERE
+        cNo = #{cNo}
+    </select>
+
+    <!-- 修改课程信息 -->
+    <update id="updateCourseById" parameterType="course">
+        UPDATE course c
+        INNER JOIN teacher t ON c.teaNo = t.id
+        <set>
+            <if test="cName != null">
+                c.cName = #{cName},
+            </if>
+            <if test="credit != null">
+                c.credit = #{credit},
+            </if>
+            <if test="address != null">
+                c.address = #{address},
+            </if>
+            <if test="cHour != null">
+                c.cHour = #{cHour},
+            </if>
+            <if test="teacher.teaName != null">
+                t.teaName = #{teacher.teaName},
+            </if>
+        </set>
+        WHERE
+        c.cNo = #{cNo}
+    </update>
+</mapper>
